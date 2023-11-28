@@ -1,10 +1,10 @@
 #pragma once
 #include "LMPC.h"
-
+#include "Traj_MPC.h"
 //C++20 Module로 바꿔볼까?
 
 //MPC in TWIP with PFL
-class MPC_TWIP :public LMPC
+class MPC_TWIP :public LMPC, public Traj_MPC
 {
 private:
 	////////////////////////////////MPC 가중치 in TWIP//////////////////////////////////////////////
@@ -27,6 +27,7 @@ public:
 	int DimTotal ;
 	int Dim_TIME;	//작동시간 (Sampling time)
 	double dT;
+	double OperationTime;
 
 	Eigen::Vector<double,3> W_YAW;
 	Eigen::Vector<double,4> W_PITCH;
@@ -85,40 +86,39 @@ public:
 		DimTotal = LMPC::getTotalHorizon();
 		dT = LMPC::getSamplingTime();
 		Dim_TIME = LMPC::getDimTIME();
+		OperationTime = LMPC::getOperationTime();
 	}
 	
 	~MPC_TWIP()
 	{}
 
-
+	Traj_MPC traj;
 	//g , A , lower and upper bound depends on system.  -> set after inheritance
 	void setStateMatrix();
 
 	void Weight2vec();
 
-	//QP 계산을 위한 referece 값 가져오기
-	//reference 값 받아서 Dim 크기의 matrix로 쌓아서 return
-	void Get_Reference(const unsigned& cur_time_stp, double* from, Eigen::VectorXd & dest);
+
 	
-	//명준 ver 
-	struct Traj
-	{
+	////명준 ver 
+	//struct Traj
+	//{
 
-		double phi[_Dim_Total]{0.0};
-		double phidot[_Dim_Total]{0.0};
-		double alpha[_Dim_Total]{0.0};
-		double alphadot[_Dim_Total]{0.0};
-		double velocity[_Dim_Total]{0.0};
-		double beta[_Dim_Total]{0.0};
-		double betadot[_Dim_Total]{ 0.0 };
+	//	double phi[_Dim_Total]{0.0};
+	//	double phidot[_Dim_Total]{0.0};
+	//	double alpha[_Dim_Total]{0.0};
+	//	double alphadot[_Dim_Total]{0.0};
+	//	double velocity[_Dim_Total]{0.0};
+	//	double beta[_Dim_Total]{0.0};
+	//	double betadot[_Dim_Total]{ 0.0 };
 
-	} des;
+	//} des;
 
-	void TrajectoryPlanning(Traj& traj);
+	//void TrajectoryPlanning(Traj& traj);
 
 	void initializeRefVec(int& size);
 
-	void solveRef(Traj& traj);
+	void solveRef();
 
 	
 	//위의 함수 넣고, qpOASES 실행 코드 넣기

@@ -11,11 +11,15 @@ void Traj_MPC::setsize_Traj(int total_step_size)
 
     traj.beta.resize(total_step_size, 0.0);
     traj.betadot.resize(total_step_size, 0.0);
+
+    traj.x_d.resize(total_step_size, 0.0);
+    traj.y_d.resize(total_step_size, 0.0);
 }
 
-//traj 유형 , total stepsize , step별 크기 , ...
-void Traj_MPC::initializeTrj(const int& trajtype , int total_step_size , int steptime)
+//traj 유형 , total stepsize , step별 크기 , 총 작동 시간 ...
+void Traj_MPC::TrajectoryPlanning(const int& trajtype , const int& total_step_size , const int& steptime , const int& execution_time)
 {
+    TIME_TASK_EXECUTION = execution_time;
     setsize_Traj(total_step_size);
 
     TrjType = trajtype;
@@ -26,33 +30,53 @@ void Traj_MPC::initializeTrj(const int& trajtype , int total_step_size , int ste
     case STAY:
         while (local_index < total_step_size)
         {
+            //already all desired trajctory is ZERO
+            break;
+        }
+         
+    case DIRECT: //Given v_r & phidot_r
+        v_r = 3.0;
+        phidot_r = 0.1;
+        while (local_index < total_step_size)
+        {
+            //이거 안밀리고 맞나?
+            local_t = local_index * steptime;
+            xdot_r = v_r * cos(phi_r);
+            ydot_r = v_r * sin(phi_r);
 
+            //kinematic controller에서 활용?
+            x_r += xdot_r * steptime;
+            y_r += ydot_r * steptime;
+            phi_r += phidot_r * steptime;
 
+            //position
+            traj.x_d[local_index] += traj.x_d[local_index] + x_r;
+            traj.y_d[local_index] += traj.y_d[local_index] + y_r;
 
+            //Yaw
+            traj.phi[local_index] = phi_r;
+            traj.phidot[local_index] = phidot_r;
 
+            //Pitch
+            traj.alpha[local_index] = 0.0;
+            traj.velocity[local_index] = v_r;
+            traj.alphadot[local_index] = 0.0;
 
-
+            //Roll
+            //...나중에
 
             local_index++;
         }
 
-    case DIRECT:
+    case CIRCLE: //	Given linear velocity ref. v_r ( Thus phidot_r = v_r / radius )
+        double magR = 5.0;
+        int NoCycle = 1;
+        v_r = 2 * M_PI * NoCycle * magR / TIME_TASK_EXECUTION;
+        phidot_r = v_r / magR;
+
         while (local_index < total_step_size)
         {
-
-
-
-
-
-
-
-            local_index++;
-        }
-
-    case CIRCLE:
-        while (local_index < total_step_size)
-        {
-
+            local_t = local_index * steptime;
 
 
 
@@ -63,3 +87,5 @@ void Traj_MPC::initializeTrj(const int& trajtype , int total_step_size , int ste
         }
     }
 }
+
+

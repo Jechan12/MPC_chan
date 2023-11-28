@@ -168,6 +168,21 @@ auto LMPC::Bound_AMatrix(const int& upper, const int& lower) ->std::tuple<Eigen:
 	return std::tuple(A_upbound, A_lwbound);
 }
 
+void LMPC::Get_Reference(const unsigned& cur_time_stp, const vector<double>& from, Eigen::VectorXd& dest)
+{
+	//if (cur_time_stp + _Dim_Preview < _Dim_Total) { //N_p + k ¹øÂ°ÀÇ step
+	//	memcpy(&dest[0], &from[cur_time_stp + 1], sizeof(double) * (_Dim_Preview));
+	//}
+
+	if (cur_time_stp + _Dim_Preview < _Dim_Total) {
+		// Assuming dest has been resized to _Dim_Preview before this function call.
+		std::copy(from.begin() + cur_time_stp + 1,
+			from.begin() + cur_time_stp + 1 + _Dim_Preview,
+			dest.data());
+	}
+
+}
+
 //col major Eigen to row major real_t of qpOASES
 qpOASES::real_t* LMPC::Convert2RealT(const Eigen::MatrixXd& mat)
 {

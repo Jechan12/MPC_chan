@@ -68,6 +68,9 @@ public:
 	//A matrix의 constraint 설정
 	auto Bound_AMatrix(const int& upper, const int& lower) -> std::tuple<Eigen::VectorXd, Eigen::VectorXd>;
 
+	//전체 trajectory의 referene에서 horizon 갯수만큼 잘라서 Eigen::Vector로 내보냄
+	void Get_Reference(const unsigned& cur_time_stp, const vector<double>& from, Eigen::VectorXd& dest);
+
 	//Change from Eigen to QP real_t
 	qpOASES::real_t* Convert2RealT(const Eigen::MatrixXd& mat);
 	qpOASES::real_t* Convert2RealT2(const Eigen::MatrixXd& mat);

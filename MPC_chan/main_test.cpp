@@ -6,16 +6,16 @@ int main()
 	std::cout << "main in MPC_TWIP.cpp" << endl;
 
 	MPC_TWIP twip;
-	MPC_TWIP::Traj des;
-
+	int trajtype = twip.DIRECT;
+	
 	//FILE* fout;
 	std::chrono::system_clock::time_point start_time3 = std::chrono::system_clock::now();
-	twip.TrajectoryPlanning(des);
+	twip.TrajectoryPlanning(trajtype , twip.DimTotal ,twip.dT, twip.OperationTime);
 	std::cout << "Planning END" << endl;
 
 	//errno_t err = fopen_s(&fout, "MPC.txt", "wt");
 
-
+	
 	twip.setStateMatrix();
 
 	auto [Ad_yaw, Bd_yaw] = twip.discretizeState(twip.DOF_Y, twip.Ac_yaw, twip.Bc_yaw);
@@ -76,7 +76,7 @@ int main()
 
 		std::chrono::system_clock::time_point start_time = std::chrono::system_clock::now();
 		
-		twip.solveRef(des);
+		twip.solveRef();
 
 		//std::chrono::system_clock::time_point start_time2 = std::chrono::system_clock::now();
 		//Eigen::VectorXd yaw_g = twip.assemble_gMatrix(twip.DOF_Y, Pss_yaw, Pus_yaw, twip.x_Yaw, twip.W_YAW, { &(twip.Preview_PHI_ref),  &twip.Preview_PHIDOT_ref });
