@@ -10,7 +10,7 @@ auto LMPC::discretizeState(const int& state_num, const MatrixXd& Ac, const  Matr
 {
 	int Acrow = Ac.rows();	int Accol = Ac.cols();
 	int Bcrow = Bc.rows();	int BCcol = Bc.cols();
-
+	
 	MatrixXd I = MatrixXd::Identity(state_num, state_num);
 	MatrixXd M(Acrow, Accol);
 	MatrixXd Ad(Acrow, Accol);
