@@ -35,11 +35,11 @@ public:
 	///////////////////////////////TWIP constant/////////////////////////////////////////////////////////
 	const int DOF_P { 3 };									// x_P = ( alpha, v_M, alphadot )
 	const int DOF_Y { 2 };									// x_Y = ( phi_M, phidot_M )
-	const int DOF_R { 2 };
+	const int DOF_R { 2 };									// x_R = ( beta_M, betadot_M )
  
 	const double l_G  { 0.69 };								//	CoM height
-	const double r_W  { 0.075 };								//  Wheel radius
-	const double W_b  { 0.215 };								//  Wheel Track / 2
+	const double r_W  { 0.075 };							//  Wheel radius
+	const double W_b  { 0.215 };							//  Wheel Track / 2
 	const double m_w  { 1.5 };								//  Wheel mass
 	const double J_wa { 0.004219 };
 	const double J_wd { 0.002222 };

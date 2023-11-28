@@ -65,7 +65,6 @@ int main()
 	//ref initialize.
 	twip.initializeRefVec(twip.Dim);
 
-	twip.solveRef(des);
 	std::cout << "loopstart" << std::endl;
 	std::chrono::system_clock::time_point end_time3 = std::chrono::system_clock::now();
 
@@ -76,7 +75,8 @@ int main()
 			twip.main_time = double(twip.global_indx) * twip.dT;
 
 		std::chrono::system_clock::time_point start_time = std::chrono::system_clock::now();
-
+		
+		twip.solveRef(des);
 
 		//std::chrono::system_clock::time_point start_time2 = std::chrono::system_clock::now();
 		//Eigen::VectorXd yaw_g = twip.assemble_gMatrix(twip.DOF_Y, Pss_yaw, Pus_yaw, twip.x_Yaw, twip.W_YAW, { &(twip.Preview_PHI_ref),  &twip.Preview_PHIDOT_ref });
@@ -147,6 +147,8 @@ int main()
 		futureYaw.get();
 		futureRoll.get();
 		futurePitch.get();
+		//.........................................................................................//
+
 
 		std::chrono::system_clock::time_point end_time = std::chrono::system_clock::now();
 		std::chrono::microseconds micro = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
