@@ -10,6 +10,7 @@ int main()
 	
 	//FILE* fout;
 	std::chrono::system_clock::time_point start_time3 = std::chrono::system_clock::now();
+	std::cout << "Planning START" << endl;
 	twip.TrajectoryPlanning(trajtype , twip.DimTotal ,twip.dT, twip.OperationTime);
 	std::cout << "Planning END" << endl;
 
@@ -17,6 +18,7 @@ int main()
 
 	
 	twip.setStateMatrix();
+	twip.Weight2vec();
 
 	auto [Ad_yaw, Bd_yaw] = twip.discretizeState(twip.DOF_Y, twip.Ac_yaw, twip.Bc_yaw);
 	auto [Ad_pitch, Bd_pitch] = twip.discretizeState(twip.DOF_P, twip.Ac_pitch, twip.Bc_pitch);
@@ -28,7 +30,6 @@ int main()
 	auto [Pss_roll, Pus_roll] = twip.stackingMatrix(twip.DOF_R, Ad_roll, Bd_roll);
 
 	//Pus 바로 H matirx로 대입
-	twip.Weight2vec();
 	auto H_yaw = twip.assemble_HMatrix(twip.DOF_Y, Pus_yaw, twip.W_YAW);
 	auto H_pitch = twip.assemble_HMatrix(twip.DOF_P, Pus_pitch, twip.W_PITCH);
 	auto H_roll = twip.assemble_HMatrix(twip.DOF_R, Pus_roll, twip.W_ROLL);

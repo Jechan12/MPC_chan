@@ -43,38 +43,6 @@ void MPC_TWIP::Weight2vec()
 	W_ROLL << W_beta, W_betadot, W_roll;
 }
 
-
-/////////////명준씨 ver////////////////
-//void MPC_TWIP::TrajectoryPlanning(Traj &traj)
-//{
-//
-//	//std::cout << "planning" << endl;
-//	volatile double local_t = 0.0;
-//	volatile int local_indx = 0;
-//	//std::cout << "local_indx : " << local_indx << std::endl;
-//
-//	while (local_indx < DimTotal) //전체 스텝동안 가야할 trajectory
-//	{
-//
-//		//std::cout << "local_indx : " << local_indx << std::endl;
-//		local_t = local_indx * MPC_TWIP::dT;
-//
-//		traj.phi[local_indx] = 1.0 * tanh(local_t);
-//		traj.phidot[local_indx] = 0.0;
-//
-//		traj.alpha[local_indx] = 0.0;
-//		traj.velocity[local_indx] = 18.0 * tanh(local_t);
-//		traj.alphadot[local_indx] = 0.0;
-//
-//		traj.beta[local_indx] = sin(local_t);
-//		traj.betadot[local_indx] = cos(local_t);
-//
-//		local_indx++;
-//	}
-//	//cout << "traj loop out" << endl;
-//
-//}
-
 void MPC_TWIP::initializeRefVec(int& size)
 {
 	Preview_PHI_ref.resize(size), Preview_PHIDOT_ref.resize(size), Preview_ALPHA_ref.resize(size), 
@@ -114,3 +82,47 @@ void MPC_TWIP::solveOptimization(qpOASES::SQProblem& example,
 	example.getPrimalSolution(Opt);
 }
 
+//루프돌기전 세팅 마무리?
+
+void MPC_TWIP::OutLoopSetYaw()
+{
+	//discretize
+	auto [Ad_yaw, Bd_yaw] = discretizeState(DOF_Y, Ac_yaw, Bc_yaw);
+	//stacking prediction matrix 
+	auto [Pss_yaw, Pus_yaw] = stackingMatrix(DOF_Y, Ad_yaw, Bd_yaw);
+	
+	//get H matirx for QP
+	auto H_yaw = assemble_HMatrix(DOF_Y, Pus_yaw, W_YAW);
+	//constraint A matrix for QP
+	auto cA_yaw = constraint_AMatrix();
+	//constraint A bound for QP
+	auto [Aub_yaw, Alb_yaw] = Bound_AMatrix(upperbound, lowerbound);
+
+	qpOASES::real_t* H_yaw_qp   = Convert2RealT(H_yaw);
+	qpOASES::real_t* cA_yaw_qp  = Convert2RealT(cA_yaw);
+	qpOASES::real_t* Aub_yaw_qp = Convert2RealT(Aub_yaw);
+	qpOASES::real_t* Alb_yaw_qp = Convert2RealT(Alb_yaw);
+}
+
+
+void MPC_TWIP::OutLoopSetPitch()
+{
+	auto [Ad_pitch, Bd_pitch] = discretizeState(DOF_P, Ac_pitch, Bc_pitch);
+
+	auto [Pss_pitch, Pus_pitch] = stackingMatrix(DOF_P, Ad_pitch, Bd_pitch);
+
+	auto H_pitch = assemble_HMatrix(DOF_P, Pus_pitch, W_PITCH);
+
+	auto cA_pitch = constraint_AMatrix();
+
+	auto [Aub_pitch, Alb_pitch] = Bound_AMatrix(upperbound, lowerbound);
+
+	qpOASES::real_t* H_pitch_qp = Convert2RealT(H_pitch);
+	qpOASES::real_t* cA_pitch_qp = Convert2RealT(cA_pitch);
+	qpOASES::real_t* Aub_pitch_qp = Convert2RealT(Aub_pitch);
+	qpOASES::real_t* Alb_pitch_qp = Convert2RealT(Alb_pitch);
+}
+
+void MPC_TWIP::OutLoopSetRoll()
+{
+}

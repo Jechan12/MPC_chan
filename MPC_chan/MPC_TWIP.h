@@ -75,9 +75,12 @@ public:
 	Eigen::VectorXd x_Pitch = Eigen::VectorXd::Zero(DOF_P);
 	Eigen::VectorXd x_Roll = Eigen::VectorXd::Zero(DOF_R);
 
-	////////////////////////reference for first order term of QP////////////////////////////
+	////////////////////////reference for first order term of QP(얘도 Traj_MPC로?)////////////////////////////
 	Eigen::VectorXd Preview_PHI_ref, Preview_PHIDOT_ref, Preview_ALPHA_ref, Preview_VELOCITY_ref, Preview_ALPHADOT_ref, Preview_BETA_ref, Preview_BETADOT_ref;
 	qpOASES::real_t Yaw_Opt[_Dim_Preview]{0.0}, Pitch_Opt[_Dim_Preview]{ 0.0 }, Roll_Opt[_Dim_Preview]{0.0};
+
+
+
 
 public:
 	MPC_TWIP()
@@ -98,28 +101,10 @@ public:
 
 	void Weight2vec();
 
-
-	
-	////명준 ver 
-	//struct Traj
-	//{
-
-	//	double phi[_Dim_Total]{0.0};
-	//	double phidot[_Dim_Total]{0.0};
-	//	double alpha[_Dim_Total]{0.0};
-	//	double alphadot[_Dim_Total]{0.0};
-	//	double velocity[_Dim_Total]{0.0};
-	//	double beta[_Dim_Total]{0.0};
-	//	double betadot[_Dim_Total]{ 0.0 };
-
-	//} des;
-
-	//void TrajectoryPlanning(Traj& traj);
-
 	void initializeRefVec(int& size);
-
+	
+	//Get_Reference 모음
 	void solveRef();
-
 	
 	//위의 함수 넣고, qpOASES 실행 코드 넣기
 	void solveOptimization(qpOASES::SQProblem& example,
@@ -132,6 +117,15 @@ public:
 		qpOASES::real_t* ub,
 		int nWSR,
 		qpOASES::real_t* Opt);
+
+	void OutLoopSetYaw();
+	void OutLoopSetPitch();
+	void OutLoopSetRoll();
+
+	void InLoopSolvYaw();
+	void InLoopSolvPitch();
+	void InLoopSolvRoll();
+
 
 	///memberfunction to act in Mujoco
 
