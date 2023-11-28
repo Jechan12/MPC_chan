@@ -88,7 +88,7 @@ auto LMPC::assemble_HMatrix(const int& state_num, std::vector<Eigen::MatrixXd>& 
 			break;
 		}
 		
-		H  += Weight_vec[0] * (Pus[0].transpose())* Pus[0];
+		H  += Weight_vec[i] * (Pus[i].transpose())* Pus[i];
 
 	}
 	return std::move(H);

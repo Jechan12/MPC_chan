@@ -21,6 +21,18 @@ private:
 	const double W_betadot { 1.0 };
 	const double W_roll    { 0.01 };
 
+	Eigen::MatrixXd H_yaw;   Eigen::MatrixXd cA_yaw;   Eigen::VectorXd Aub_yaw;   Eigen::VectorXd Alb_yaw;
+	Eigen::MatrixXd H_pitch; Eigen::MatrixXd cA_pitch; Eigen::VectorXd Aub_pitch; Eigen::VectorXd Alb_pitch;
+	Eigen::MatrixXd H_roll;  Eigen::MatrixXd cA_roll;  Eigen::VectorXd Aub_roll;  Eigen::VectorXd Alb_roll;
+
+	qpOASES::real_t* H_yaw_qp;	 qpOASES::real_t* cA_yaw_qp;	qpOASES::real_t* Aub_yaw_qp;	qpOASES::real_t* Alb_yaw_qp;
+	qpOASES::real_t* H_pitch_qp; qpOASES::real_t* cA_pitch_qp;	qpOASES::real_t* Aub_pitch_qp;	qpOASES::real_t* Alb_pitch_qp;
+	qpOASES::real_t* H_roll_qp;	 qpOASES::real_t* cA_roll_qp;	qpOASES::real_t* Aub_roll_qp;	qpOASES::real_t* Alb_roll_qp;
+	
+	std::vector<Eigen::MatrixXd> Pss_yaw;   std::vector<Eigen::MatrixXd> Pus_yaw;
+	std::vector<Eigen::MatrixXd> Pss_pitch; std::vector<Eigen::MatrixXd> Pus_pitch;
+	std::vector<Eigen::MatrixXd> Pss_roll;  std::vector<Eigen::MatrixXd> Pus_roll;
+
 public:
 	////////////////////// From mother class for convenience /////////////////////////////////
 	int Dim;		//Np
@@ -29,6 +41,10 @@ public:
 	double dT;
 	double OperationTime;
 
+	int global_indx = 0;
+	double main_time = 0.0;
+
+private:
 	Eigen::Vector<double,3> W_YAW;
 	Eigen::Vector<double,4> W_PITCH;
 	Eigen::Vector<double,3> W_ROLL;
@@ -54,8 +70,8 @@ public:
 	const double g_const = 9.81;
 	const int upperbound = 100;
 	const int lowerbound = -100;
-	int global_indx = 0;
-	double main_time = 0.0;
+	
+	
 	
 	double Trgt_a_yaw{ 0.0 };
 	double Trgt_a_pitch{ 0.0 };
@@ -68,6 +84,10 @@ public:
 	Eigen::VectorXd Bc_yaw   = Eigen::MatrixXd::Zero(DOF_Y, 1);
 	Eigen::MatrixXd Ac_roll  = Eigen::MatrixXd::Zero(DOF_R, DOF_R);
 	Eigen::VectorXd Bc_roll  = Eigen::MatrixXd::Zero(DOF_R, 1);
+	//////////////////////////////////////////////////////////////////////////////////
+
+
+
 
 	////////////////////state for first order term of QP//////////////////////////////////
 
@@ -79,7 +99,7 @@ public:
 	Eigen::VectorXd Preview_PHI_ref, Preview_PHIDOT_ref, Preview_ALPHA_ref, Preview_VELOCITY_ref, Preview_ALPHADOT_ref, Preview_BETA_ref, Preview_BETADOT_ref;
 	qpOASES::real_t Yaw_Opt[_Dim_Preview]{0.0}, Pitch_Opt[_Dim_Preview]{ 0.0 }, Roll_Opt[_Dim_Preview]{0.0};
 
-
+	
 
 
 public:
@@ -87,13 +107,17 @@ public:
 	{
 		Dim = LMPC::getHorizonDim();
 		DimTotal = LMPC::getTotalHorizon();
-		dT = LMPC::getSamplingTime();
+		dT  =  LMPC::getSamplingTime() ;
 		Dim_TIME = LMPC::getDimTIME();
 		OperationTime = LMPC::getOperationTime();
 	}
 	
 	~MPC_TWIP()
-	{}
+	{
+		delete[] H_yaw_qp, cA_yaw_qp , Aub_yaw_qp , Alb_yaw_qp;
+		delete[] H_pitch_qp , cA_pitch_qp , Aub_pitch_qp , Alb_pitch_qp;
+		delete[] H_roll_qp , cA_roll_qp , Aub_roll_qp , Alb_roll_qp;
+	}
 
 	Traj_MPC traj;
 	//g , A , lower and upper bound depends on system.  -> set after inheritance

@@ -21,7 +21,7 @@ class LMPC
 protected:
 	
 	/////////////////////////////MPC관련 상수///////////////////////////////////////////////////
-	static constexpr double _dT = 0.030;			// Sampling Time [s]
+	static constexpr double _dT = 0.025;			// Sampling Time [s]
 	static constexpr double _Time = 10.0;			// Total Time (총 작동시간)
 	static constexpr double _Time_Preview = 1.5;	// Horizon [s]
 
