@@ -24,6 +24,9 @@
     <ClInclude Include="LMPC.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Traj_MPC.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="MPC_TWIP.cpp">
@@ -88,6 +91,9 @@
     </ClCompile>
     <ClCompile Include="..\..\..\libss\qpOASES-master\src\SubjectTo.cpp">
       <Filter>Header Files\qpOASES</Filter>
+    </ClCompile>
+    <ClCompile Include="Traj_MPC.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

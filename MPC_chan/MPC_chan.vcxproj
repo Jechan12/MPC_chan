@@ -137,6 +137,7 @@
   <ItemGroup>
     <ClInclude Include="LMPC.h" />
     <ClInclude Include="MPC_TWIP.h" />
+    <ClInclude Include="Traj_MPC.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\libss\qpOASES-master\src\BLASReplacement.cpp" />
@@ -160,6 +161,7 @@
     <ClCompile Include="LMPC.cpp" />
     <ClCompile Include="main_test.cpp" />
     <ClCompile Include="MPC_TWIP.cpp" />
+    <ClCompile Include="Traj_MPC.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

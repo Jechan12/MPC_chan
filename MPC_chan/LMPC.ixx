@@ -1,9 +1,7 @@
 module;
 #include <iostream>
-#include <chrono>
-#include <ctime>
-#include <math.h>
-#include <time.h>
+#include <thread>
+#include <future>
 #include <qpOASES.hpp>
 #include <tuple>
 #include <Eigen/Core>
@@ -17,7 +15,7 @@ module;
 #include "Robotics_func.h"
 
 export module LMPC;
-
+import std.core;
 	/////////////////////////////MPC관련 상수///////////////////////////////////////////////////
 	constexpr double _dT = 0.030;			// Sampling Time [s]
 	constexpr double _Time = 10.0;			// Total Time (총 작동시간)
