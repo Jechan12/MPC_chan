@@ -33,18 +33,6 @@ private:
 	std::vector<Eigen::MatrixXd> Pss_pitch; std::vector<Eigen::MatrixXd> Pus_pitch;
 	std::vector<Eigen::MatrixXd> Pss_roll;  std::vector<Eigen::MatrixXd> Pus_roll;
 
-public:
-	////////////////////// From mother class for convenience /////////////////////////////////
-	int Dim;		//Np
-	int DimTotal ;
-	int Dim_TIME;	//작동시간 (Sampling time)
-	double dT;
-	double OperationTime;
-
-	int global_indx = 0;
-	double main_time = 0.0;
-
-private:
 	Eigen::Vector<double,3> W_YAW;
 	Eigen::Vector<double,4> W_PITCH;
 	Eigen::Vector<double,3> W_ROLL;
@@ -99,15 +87,23 @@ private:
 	Eigen::VectorXd Preview_PHI_ref, Preview_PHIDOT_ref, Preview_ALPHA_ref, Preview_VELOCITY_ref, Preview_ALPHADOT_ref, Preview_BETA_ref, Preview_BETADOT_ref;
 	qpOASES::real_t Yaw_Opt[_Dim_Preview]{0.0}, Pitch_Opt[_Dim_Preview]{ 0.0 }, Roll_Opt[_Dim_Preview]{0.0};
 
+public:
+	////////////////////// From mother class for convenience /////////////////////////////////
+	int Dim;		//Np
+	int DimTotal;
+	int Dim_TIME;	//작동시간 (Sampling time)
+	double dT;
+	double OperationTime;
+
+	int global_indx = 0;
+	double main_time = 0.0;
 	
 
-
-public:
 	MPC_TWIP()
 	{
-		Dim = LMPC::getHorizonDim();
+		Dim      = LMPC::getHorizonDim();
 		DimTotal = LMPC::getTotalHorizon();
-		dT  =  LMPC::getSamplingTime() ;
+		dT       = LMPC::getSamplingTime() ;
 		Dim_TIME = LMPC::getDimTIME();
 		OperationTime = LMPC::getOperationTime();
 	}

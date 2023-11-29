@@ -46,6 +46,7 @@ public:
 		STAY = 0,
 		DIRECT,
 		CIRCLE,
+		TEST
 	};
 
 

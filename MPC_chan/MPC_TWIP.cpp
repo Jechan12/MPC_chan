@@ -114,9 +114,10 @@ void MPC_TWIP::OutLoopSetPitch()
 	auto [Ad_pitch, Bd_pitch] = discretizeState(DOF_P, Ac_pitch, Bc_pitch);
 
 	std::tie(Pss_pitch, Pus_pitch) = stackingMatrix(DOF_P, Ad_pitch, Bd_pitch);
-	
-	H_pitch = assemble_HMatrix(DOF_P, Pus_pitch, W_PITCH);
 
+	H_pitch = assemble_HMatrix(DOF_P, Pus_pitch, W_PITCH);
+	//cout << "H_pitch" << endl;
+	//cout << H_pitch<< endl;
 	cA_pitch = constraint_AMatrix();
 
 	std::tie(Aub_pitch, Alb_pitch) = Bound_AMatrix(upperbound, lowerbound);
@@ -134,26 +135,28 @@ void MPC_TWIP::OutLoopSetRoll()
 	auto [Ad_roll, Bd_roll] = discretizeState(DOF_R, Ac_roll,Bc_roll);
 
 	std::tie(Pss_roll, Pus_roll) = stackingMatrix(DOF_R, Ad_roll, Bd_roll);
-
+	//cout << "ROLL" << endl;
+	//cout << Pss_roll[0] << endl;
 	H_roll = assemble_HMatrix(DOF_R, Pus_roll, W_ROLL);
-
+	//cout << "H_roll" << endl;
+	//cout << H_roll << endl;
 	cA_roll = constraint_AMatrix();
 
 	std::tie(Aub_roll, Alb_roll) = Bound_AMatrix(upperbound, lowerbound);
 
-	qpOASES::real_t* H_roll_qp   = Convert2RealT(H_roll);
-	qpOASES::real_t* cA_roll_qp  = Convert2RealT(cA_roll);
-	qpOASES::real_t* Aub_roll_qp = Convert2RealT(Aub_roll);
-	qpOASES::real_t* Alb_roll_qp = Convert2RealT(Alb_roll);
+	H_roll_qp   = Convert2RealT(H_roll);
+	cA_roll_qp  = Convert2RealT(cA_roll);
+	Aub_roll_qp = Convert2RealT(Aub_roll);
+	Alb_roll_qp = Convert2RealT(Alb_roll);
 }
 
 void MPC_TWIP::InLoopSolvYaw()
 {
 	qpOASES::int_t nWSR = 100;
 	qpOASES::SQProblem yawExample(MPC_TWIP::Dim, 1);
-	Eigen::VectorXd yaw_g = assemble_gMatrix(MPC_TWIP::DOF_Y, Pss_yaw, Pus_yaw, MPC_TWIP::x_Yaw, W_YAW, { &(Preview_PHI_ref),  &Preview_PHIDOT_ref });
-	qpOASES::real_t* yaw_g_qp = Convert2RealT(yaw_g);
-	solveOptimization(yawExample, H_yaw_qp, yaw_g_qp, cA_yaw_qp, Alb_yaw_qp, Aub_yaw_qp, nullptr, nullptr, nWSR, Yaw_Opt);
+	Eigen::VectorXd g_yaw = assemble_gMatrix(MPC_TWIP::DOF_Y, Pss_yaw, Pus_yaw, MPC_TWIP::x_Yaw, W_YAW, { &(Preview_PHI_ref),  &Preview_PHIDOT_ref });
+	qpOASES::real_t* g_yaw_qp = Convert2RealT(g_yaw);
+	solveOptimization(yawExample, H_yaw_qp, g_yaw_qp, cA_yaw_qp, Alb_yaw_qp, Aub_yaw_qp, nullptr, nullptr, nWSR, Yaw_Opt);
 	Trgt_a_yaw = Yaw_Opt[0];
 }
 
@@ -161,8 +164,8 @@ void MPC_TWIP::InLoopSolvPitch()
 {
 	qpOASES::int_t nWSR = 100;
 	qpOASES::SQProblem pitchExample(MPC_TWIP::Dim, 1);
-	Eigen::VectorXd pitch_g = assemble_gMatrix(MPC_TWIP::DOF_P, Pss_pitch, Pus_pitch, MPC_TWIP::x_Pitch, W_PITCH, { &(Preview_ALPHA_ref),&(Preview_VELOCITY_ref),&(Preview_ALPHADOT_ref) });
-	qpOASES::real_t* pitch_g_qp = Convert2RealT(pitch_g);
+	Eigen::VectorXd g_pitch = assemble_gMatrix(MPC_TWIP::DOF_P, Pss_pitch, Pus_pitch, MPC_TWIP::x_Pitch, W_PITCH, { &(Preview_ALPHA_ref),&(Preview_VELOCITY_ref),&(Preview_ALPHADOT_ref) });
+	qpOASES::real_t* g_pitch_qp = Convert2RealT(g_pitch);
 
 	//cout << "sizeof(H_pitch_qp) : " << sizeof(&H_pitch_qp) << endl;
 
@@ -174,8 +177,8 @@ void MPC_TWIP::InLoopSolvPitch()
 
 	//cout << "sizeof(Aub_pitch_qp) : " << sizeof(&Aub_pitch_qp) << endl;
 
-	solveOptimization(pitchExample, H_pitch_qp, pitch_g_qp, cA_pitch_qp, Alb_pitch_qp, Aub_pitch_qp, nullptr, nullptr, nWSR, Pitch_Opt);
-	Trgt_a_pitch = Pitch_Opt[0];
+	solveOptimization(pitchExample, H_pitch_qp, g_pitch_qp, cA_pitch_qp, Alb_pitch_qp, Aub_pitch_qp, nullptr, nullptr, nWSR, Pitch_Opt);
+	Trgt_a_pitch = Pitch_Opt[0]; //첫번째 가속도
 }
 
 void MPC_TWIP::InLoopSolvRoll()
@@ -184,11 +187,11 @@ void MPC_TWIP::InLoopSolvRoll()
 	
 	qpOASES::SQProblem rollExample(MPC_TWIP::Dim, 1);
 
-	Eigen::VectorXd roll_g = assemble_gMatrix(MPC_TWIP::DOF_R, Pss_roll, Pus_roll, x_Roll, W_ROLL, { &(Preview_BETA_ref), &(Preview_BETADOT_ref) });
+	Eigen::VectorXd g_roll = assemble_gMatrix(MPC_TWIP::DOF_R, Pss_roll, Pus_roll, x_Roll, W_ROLL, { &(Preview_BETA_ref), &(Preview_BETADOT_ref) });
 	
-	qpOASES::real_t* roll_g_qp = Convert2RealT(roll_g);
+	qpOASES::real_t* g_roll_qp = Convert2RealT(g_roll);
 
-	solveOptimization(rollExample, H_roll_qp, roll_g_qp, cA_roll_qp, Alb_roll_qp, Aub_roll_qp, nullptr, nullptr, nWSR, Roll_Opt);
+	solveOptimization(rollExample, H_roll_qp, g_roll_qp, cA_roll_qp, Alb_roll_qp, Aub_roll_qp, nullptr, nullptr, nWSR, Roll_Opt);
 	
 	Trgt_a_roll = Roll_Opt[0];
 }

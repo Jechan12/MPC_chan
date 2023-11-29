@@ -6,7 +6,7 @@ int main()
 	std::cout << "main in MPC_TWIP.cpp" << endl;
 
 	MPC_TWIP twip;
-	int trajtype = twip.DIRECT;
+	int trajtype = twip.TEST;
 	
 	//FILE* fout;
 	std::chrono::system_clock::time_point start_time3 = std::chrono::system_clock::now();
