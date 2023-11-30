@@ -6,7 +6,7 @@ int main()
 	std::cout << "main in MPC_TWIP.cpp" << endl;
 
 	MPC_TWIP twip;
-	int trajtype = twip.TEST;
+	int trajtype = twip.DIRECT;
 	
 	//FILE* fout;
 	std::chrono::system_clock::time_point start_time3 = std::chrono::system_clock::now();
@@ -66,7 +66,11 @@ int main()
 	//qpOASES::real_t* Alb_roll_qp = twip.Convert2RealT(Alb_roll);
 
 	//ref initialize.
-	
+	double true_xpos = 0.0;
+	double true_ypos = 0.0;
+	double true_vel = 0.0;
+	double ture_pitch = 0.0;
+	double true_yaw = 0.0;
 
 	std::cout << "loopstart" << std::endl;
 	std::chrono::system_clock::time_point end_time3 = std::chrono::system_clock::now();
@@ -75,7 +79,7 @@ int main()
 	{
 		USING_NAMESPACE_QPOASES
 
-			twip.main_time = double(twip.global_indx) * twip.dT;
+		//twip.main_time = double(twip.global_indx) * twip.dT;
 
 		std::chrono::system_clock::time_point start_time = std::chrono::system_clock::now();
 		
@@ -149,6 +153,7 @@ int main()
 			//twip.Trgt_a_roll = twip.Roll_Opt[0];
 			////delete[] roll_g_qp;
 			////roll_g_qp = nullptr;
+			
 			twip.InLoopSolvRoll();
 			});
 
@@ -156,6 +161,9 @@ int main()
 		futureRoll.get();
 		futurePitch.get();
 		//.........................................................................................//
+
+		ture_pitch = twip.Trgt_a_pitch * twip.dT* twip.dT;
+		true_yaw = twip.Trgt_a_yaw * twip.dT* twip.dT;
 
 
 		std::chrono::system_clock::time_point end_time = std::chrono::system_clock::now();
@@ -172,6 +180,6 @@ int main()
 
 	std::cout << "loop END " << endl;
 	std::cout << "global_index : " << twip.global_indx << endl;
-
+	//
 	return 0;
 }

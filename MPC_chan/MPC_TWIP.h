@@ -60,11 +60,11 @@ private:
 	const int lowerbound = -100;
 	
 	
-	
-	double Trgt_a_yaw{ 0.0 };
-	double Trgt_a_pitch{ 0.0 };
-	double Trgt_a_roll{ 0.0 };
-
+public:
+	double Trgt_a_yaw = 0.0;
+	double Trgt_a_pitch = 0.0;
+	double Trgt_a_roll = 0.0;
+private:
 	//////////////////////////matirx of continous state/////////////////////////////////
 	Eigen::MatrixXd Ac_pitch = Eigen::MatrixXd::Zero(DOF_P, DOF_P);
 	Eigen::Vector3d Bc_pitch = Eigen::MatrixXd::Zero(DOF_P, 1);
@@ -78,7 +78,7 @@ private:
 
 
 	////////////////////state for first order term of QP//////////////////////////////////
-
+public:
 	Eigen::VectorXd x_Yaw = Eigen::VectorXd::Zero(DOF_Y);
 	Eigen::VectorXd x_Pitch = Eigen::VectorXd::Zero(DOF_P);
 	Eigen::VectorXd x_Roll = Eigen::VectorXd::Zero(DOF_R);
@@ -87,24 +87,25 @@ private:
 	Eigen::VectorXd Preview_PHI_ref, Preview_PHIDOT_ref, Preview_ALPHA_ref, Preview_VELOCITY_ref, Preview_ALPHADOT_ref, Preview_BETA_ref, Preview_BETADOT_ref;
 	qpOASES::real_t Yaw_Opt[_Dim_Preview]{0.0}, Pitch_Opt[_Dim_Preview]{ 0.0 }, Roll_Opt[_Dim_Preview]{0.0};
 
-public:
+
 	////////////////////// From mother class for convenience /////////////////////////////////
 	int Dim;		//Np
 	int DimTotal;
 	int Dim_TIME;	//작동시간 (Sampling time)
 	double dT;
 	double OperationTime;
-
+	double StartTime;
 	int global_indx = 0;
 	double main_time = 0.0;
 	
 
 	MPC_TWIP()
 	{
-		Dim      = LMPC::getHorizonDim();
-		DimTotal = LMPC::getTotalHorizon();
-		dT       = LMPC::getSamplingTime() ;
-		Dim_TIME = LMPC::getDimTIME();
+		Dim       = LMPC::getHorizonDim();
+		DimTotal  = LMPC::getTotalHorizon();
+		dT        = LMPC::getSamplingTime() ;
+		Dim_TIME  = LMPC::getDimTIME();
+		StartTime = LMPC::getStratTime();
 		OperationTime = LMPC::getOperationTime();
 	}
 	
@@ -145,6 +146,9 @@ public:
 	void InLoopSolvYaw();
 	void InLoopSolvPitch();
 	void InLoopSolvRoll();
+
+	//for mujoco test
+
 
 
 	///memberfunction to act in Mujoco

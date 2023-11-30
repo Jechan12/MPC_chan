@@ -16,6 +16,9 @@
     <Filter Include="Header Files\qpOASES">
       <UniqueIdentifier>{94a0f001-0848-4c6e-aeac-9bdccef75de6}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\test">
+      <UniqueIdentifier>{a97f02ed-33f7-4903-b642-fde01939fb8b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MPC_TWIP.h">

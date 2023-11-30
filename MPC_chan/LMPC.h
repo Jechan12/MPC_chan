@@ -15,7 +15,6 @@
 #include <future>
 #include "CommUtil.h"
 #include "Robotics_func.h"
-
 class LMPC
 {
 protected:
@@ -24,7 +23,7 @@ protected:
 	static constexpr double _dT = 0.030;			// Sampling Time [s]
 	static constexpr double _Time = 10.0;			// Total Time (총 작동시간)
 	static constexpr double _Time_Preview = 1.5;	// Horizon [s]
-
+	static constexpr double _StartTime = 0.0;
 	int _NumTarget_Input = 1;						//system의 입력변수 u
 	const double _Ts = _dT;							// sampling time ex) 0.01 = 100Hz
 	
@@ -85,7 +84,7 @@ public:
 	int getHorizonDim() const		  { return _Dim_Preview; }
 	const int getTotalHorizon() const { return _Dim_Total; }
 	int getDimTIME() const			  { return _Dim_Time; }
-	
+	double getStratTime()			  { return _StartTime; }
 };
 
 
