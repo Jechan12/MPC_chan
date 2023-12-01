@@ -31,10 +31,10 @@ public:
 	double xddot_r{ 0.0 }, yddot_r{ 0.0 };
 
 	//Total 작동 시간만큼의 step 동적할당
-	void setsize_Traj(int size);
+	void setsize_Traj(const int size);
 
 	// traj 별 기본 초기화 + planning
-	void TrajectoryPlanning(const int& trajtype , const int& total_step_size, const int& steptime, const int& execution_time);
+	void TrajectoryPlanning(const int& trajtype , const int& total_step_size, const double& steptime, const double& execution_time);
 
 	//Kinematic Controller
 

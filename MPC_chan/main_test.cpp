@@ -71,6 +71,8 @@ int main()
 	double true_vel = 0.0;
 	double ture_pitch = 0.0;
 	double true_yaw = 0.0;
+	double true_pitchdot = 0.0;
+	double true_yawdot = 0.0;
 
 	std::cout << "loopstart" << std::endl;
 	std::chrono::system_clock::time_point end_time3 = std::chrono::system_clock::now();
@@ -78,6 +80,8 @@ int main()
 	while (twip.global_indx < twip.Dim_TIME)
 	{
 		USING_NAMESPACE_QPOASES
+	
+		//State update ÇØÁà¾ßÇÔ!
 
 		//twip.main_time = double(twip.global_indx) * twip.dT;
 
@@ -95,7 +99,7 @@ int main()
 		//qpOASES::real_t* roll_g_qp  = twip.Convert2RealT(roll_g);
 		//std::chrono::system_clock::time_point end_time2 = std::chrono::system_clock::now();
 
-		int_t nWSR = 100;
+		//int_t nWSR = 100;
 		//..............................< ORIGINAL >.................................//
 		//////////////////example.init(H, g, A, lb, ub, lbA, ubA, nWSR);///////////////////////
 		//qpOASES::SQProblem example(twip.Dim , 1);
@@ -122,25 +126,27 @@ int main()
 		//twip.InLoopSolvPitch();
 		//twip.InLoopSolvRoll();
 		auto futurePitch = std::async(std::launch::async, [&]() {
-			//Eigen::VectorXd pitch_g = twip.assemble_gMatrix(twip.DOF_P, Pss_pitch, Pus_pitch, twip.x_Pitch, twip.W_PITCH, { &(twip.Preview_ALPHA_ref),&(twip.Preview_VELOCITY_ref),&(twip.Preview_ALPHADOT_ref) });
+			//Eigen::VectorXd pitch_g = twip.assemble_gMatrix(twip.DOF_P, twip.Pss_pitch, Pus_pitch, twip.x_Pitch, twip.W_PITCH, { &(twip.Preview_ALPHA_ref),&(twip.Preview_VELOCITY_ref),&(twip.Preview_ALPHADOT_ref) });
 			//qpOASES::real_t* pitch_g_qp = twip.Convert2RealT(pitch_g);
-			////qpOASES::real_t* pitch_g_qp = twip.Convert2RealT2(pitch_g);
+			//////qpOASES::real_t* pitch_g_qp = twip.Convert2RealT2(pitch_g);
 			//twip.solveOptimization(pitchExample, H_pitch_qp, pitch_g_qp, cA_pitch_qp, Alb_pitch_qp, Aub_pitch_qp, nullptr, nullptr, nWSR, twip.Pitch_Opt);
 			//twip.Trgt_a_pitch = twip.Pitch_Opt[0];
 			////delete[] pitch_g_qp;
 			////pitch_g_qp = nullptr;
+
 			twip.InLoopSolvYaw();
 			});
 
 
 		auto futureYaw = std::async(std::launch::async, [&]() {
-			//Eigen::VectorXd yaw_g = twip.assemble_gMatrix(twip.DOF_Y, Pss_yaw, Pus_yaw, twip.x_Yaw, twip.W_YAW, { &(twip.Preview_PHI_ref),  &twip.Preview_PHIDOT_ref });
+			//Eigen::VectorXd yaw_g = twip.assemble_gMatrix(twip.DOF_Y, twip.Pss_yaw, twip.Pus_yaw, twip.x_Yaw, twip.W_YAW, { &(twip.Preview_PHI_ref),  &twip.Preview_PHIDOT_ref });
 			//qpOASES::real_t* yaw_g_qp = twip.Convert2RealT(yaw_g);
 			////qpOASES::real_t* yaw_g_qp = twip.Convert2RealT2(yaw_g);
-			//twip.solveOptimization(yawExample, H_yaw_qp, yaw_g_qp, cA_yaw_qp, Alb_yaw_qp, Aub_yaw_qp, nullptr, nullptr, nWSR, twip.Yaw_Opt);
+			//twip.solveOptimization(yawExample, twip.H_yaw_qp, yaw_g_qp, twip.cA_yaw_qp, twip.Alb_yaw_qp, twip.Aub_yaw_qp, nullptr, nullptr, nWSR, twip.Yaw_Opt);
 			//twip.Trgt_a_yaw = twip.Yaw_Opt[0];
 			////delete[] yaw_g_qp;
 			////yaw_g_qp = nullptr;
+
 			twip.InLoopSolvPitch();
 			});
 
@@ -164,6 +170,13 @@ int main()
 
 		ture_pitch = twip.Trgt_a_pitch * twip.dT* twip.dT;
 		true_yaw = twip.Trgt_a_yaw * twip.dT* twip.dT;
+		true_pitchdot = twip.Trgt_a_pitch * twip.dT;
+		true_yawdot = twip.Trgt_a_yaw * twip.dT;
+
+		twip.x_Pitch(1) = true_pitchdot;
+
+		twip.x_Yaw(0) = true_yaw ;
+		twip.x_Yaw(1) = true_yawdot;
 
 
 		std::chrono::system_clock::time_point end_time = std::chrono::system_clock::now();

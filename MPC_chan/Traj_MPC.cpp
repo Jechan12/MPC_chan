@@ -1,6 +1,6 @@
 #include "Traj_MPC.h"
 
-void Traj_MPC::setsize_Traj(int total_step_size)
+void Traj_MPC::setsize_Traj(const int total_step_size)
 {
     traj.phi.resize(total_step_size, 0.0);
     traj.phidot.resize(total_step_size, 0.0);
@@ -17,7 +17,7 @@ void Traj_MPC::setsize_Traj(int total_step_size)
 }
 
 //traj 유형 , total stepsize , step별 크기 , 총 작동 시간 ...
-void Traj_MPC::TrajectoryPlanning(const int& trajtype , const int& total_step_size , const int& steptime , const int& execution_time)
+void Traj_MPC::TrajectoryPlanning(const int& trajtype , const int& total_step_size , const double& steptime , const double& execution_time)
 {
     TIME_TASK_EXECUTION = execution_time;
     setsize_Traj(total_step_size);
@@ -38,19 +38,23 @@ void Traj_MPC::TrajectoryPlanning(const int& trajtype , const int& total_step_si
     else if (TrjType == DIRECT) //Given v_r & phidot_r
     {
         //유지보수를 위해 헤더로 보내는게 좋을 듯
-        v_r = 3.0;
-        phidot_r = 0.1;
+        //v_r = 3.0 * tanh(0.5 * local_t);
+        phidot_r = 0.0;
+        phi_r = 0.0;
         while (local_index < total_step_size)
         {
+            local_t = local_index * steptime * 100.0;
+            
+            v_r = 0.1;// *tanh(local_index);
+            //std::cout << steptime << std::endl;
             //이거 안밀리고 맞나?
-            local_t = local_index * steptime;
             xdot_r = v_r * cos(phi_r);
             ydot_r = v_r * sin(phi_r);
 
             //kinematic controller에서 활용?
             x_r += xdot_r * steptime;
             y_r += ydot_r * steptime;
-            phi_r += phidot_r * steptime;
+            //phi_r += phidot_r * steptime;
 
             //position
             traj.x_d[local_index] += traj.x_d[local_index] + x_r;
@@ -66,7 +70,8 @@ void Traj_MPC::TrajectoryPlanning(const int& trajtype , const int& total_step_si
             traj.alphadot[local_index] = 0.0;
 
             //Roll
-            //...나중에
+            traj.beta[local_index] = 0.0;
+            traj.betadot[local_index] = 0.0;
 
             local_index++;
         }

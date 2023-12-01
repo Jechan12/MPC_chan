@@ -6,21 +6,21 @@
 //MPC in TWIP with PFL
 class MPC_TWIP :public LMPC, public Traj_MPC
 {
-private:
+
 	////////////////////////////////MPC 가중치 in TWIP//////////////////////////////////////////////
-	const double W_phi   { 1000.0 };
-	const double W_phidot{ 100.0 };
-	const double W_yaw   { 0.01 };
+	double W_phi   { 100.0 };
+	double W_phidot{ 20.0 };
+	double W_yaw   { 0.001 };
 	
-	const double W_alpha   { 400.0 };
-	const double W_velocity{ 100.0 };
-	const double W_alphadot{ 1.0 };
-	const double W_pitch   { 0.0001 };  //pdf 상 smooth input 
+	double W_alpha   { 1000.0 };
+	double W_velocity{ 800.0 };
+	double W_alphadot{ 200.0 };
+	double W_pitch   { 0.001 };  //pdf 상 smooth input 
 
-	const double W_beta    { 1000.0 };
-	const double W_betadot { 1.0 };
-	const double W_roll    { 0.01 };
-
+	double W_beta    { 1000.0 };
+	double W_betadot { 1.0 };
+	double W_roll    { 0.01 };
+public:
 	Eigen::MatrixXd H_yaw;   Eigen::MatrixXd cA_yaw;   Eigen::VectorXd Aub_yaw;   Eigen::VectorXd Alb_yaw;
 	Eigen::MatrixXd H_pitch; Eigen::MatrixXd cA_pitch; Eigen::VectorXd Aub_pitch; Eigen::VectorXd Alb_pitch;
 	Eigen::MatrixXd H_roll;  Eigen::MatrixXd cA_roll;  Eigen::VectorXd Aub_roll;  Eigen::VectorXd Alb_roll;
@@ -64,7 +64,7 @@ public:
 	double Trgt_a_yaw = 0.0;
 	double Trgt_a_pitch = 0.0;
 	double Trgt_a_roll = 0.0;
-private:
+
 	//////////////////////////matirx of continous state/////////////////////////////////
 	Eigen::MatrixXd Ac_pitch = Eigen::MatrixXd::Zero(DOF_P, DOF_P);
 	Eigen::Vector3d Bc_pitch = Eigen::MatrixXd::Zero(DOF_P, 1);
@@ -79,9 +79,9 @@ private:
 
 	////////////////////state for first order term of QP//////////////////////////////////
 public:
-	Eigen::VectorXd x_Yaw = Eigen::VectorXd::Zero(DOF_Y);
-	Eigen::VectorXd x_Pitch = Eigen::VectorXd::Zero(DOF_P);
-	Eigen::VectorXd x_Roll = Eigen::VectorXd::Zero(DOF_R);
+	Eigen::VectorXd x_Yaw = Eigen::VectorXd::Zero(DOF_Y);   //2 (phi, phidot)
+	Eigen::VectorXd x_Pitch = Eigen::VectorXd::Zero(DOF_P); //3 (alpha, velocity ,alphadot)
+	Eigen::VectorXd x_Roll = Eigen::VectorXd::Zero(DOF_R);  //2 (beta, betadot)
 
 	////////////////////////reference for first order term of QP(얘도 Traj_MPC로?)////////////////////////////
 	Eigen::VectorXd Preview_PHI_ref, Preview_PHIDOT_ref, Preview_ALPHA_ref, Preview_VELOCITY_ref, Preview_ALPHADOT_ref, Preview_BETA_ref, Preview_BETADOT_ref;
@@ -98,13 +98,15 @@ public:
 	int global_indx = 0;
 	double main_time = 0.0;
 	
+	std::chrono::steady_clock::time_point lastUpdate;
+	std::chrono::milliseconds minInterval;
 
 	MPC_TWIP()
 	{
-		Dim       = LMPC::getHorizonDim();
-		DimTotal  = LMPC::getTotalHorizon();
-		dT        = LMPC::getSamplingTime() ;
-		Dim_TIME  = LMPC::getDimTIME();
+		Dim       = LMPC::getHorizonDim();		//_Dim_Preview (N_p)
+		DimTotal  = LMPC::getTotalHorizon();	// 전체 Time Dimension (마지막 Horizon Dimension의 MPC 계산을 위해)
+		dT        = LMPC::getSamplingTime() ;	//_dT
+		Dim_TIME  = LMPC::getDimTIME();			//_Dim_Time // 전체 Time Dimension
 		StartTime = LMPC::getStratTime();
 		OperationTime = LMPC::getOperationTime();
 	}
@@ -114,6 +116,7 @@ public:
 		delete[] H_yaw_qp, cA_yaw_qp , Aub_yaw_qp , Alb_yaw_qp;
 		delete[] H_pitch_qp , cA_pitch_qp , Aub_pitch_qp , Alb_pitch_qp;
 		delete[] H_roll_qp , cA_roll_qp , Aub_roll_qp , Alb_roll_qp;
+		cout << "MPC_TWIP destrucor" << endl;
 	}
 
 	Traj_MPC traj;
@@ -146,6 +149,8 @@ public:
 	void InLoopSolvYaw();
 	void InLoopSolvPitch();
 	void InLoopSolvRoll();
+
+	void setTIME(double &steptime);
 
 	//for mujoco test
 

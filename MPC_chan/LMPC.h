@@ -20,8 +20,8 @@ class LMPC
 protected:
 	
 	/////////////////////////////MPC관련 상수///////////////////////////////////////////////////
-	static constexpr double _dT = 0.030;			// Sampling Time [s]
-	static constexpr double _Time = 10.0;			// Total Time (총 작동시간)
+	static constexpr double _dT = 0.03;			// Sampling Time [s]
+	static constexpr double _Time = 60.0;			// Total Time (총 작동시간)
 	static constexpr double _Time_Preview = 1.5;	// Horizon [s]
 	static constexpr double _StartTime = 0.0;
 	int _NumTarget_Input = 1;						//system의 입력변수 u
@@ -68,11 +68,12 @@ public:
 	auto Bound_AMatrix(const int& upper, const int& lower) -> std::tuple<Eigen::VectorXd, Eigen::VectorXd>;
 
 	//전체 trajectory의 referene에서 horizon 갯수만큼 잘라서 Eigen::Vector로 내보냄
-	void Get_Reference(const unsigned& cur_time_stp, const vector<double>& from, Eigen::VectorXd& dest);
+	void Get_Reference(const unsigned int& cur_time_stp, const vector<double>& from, Eigen::VectorXd& dest);
 
 	//Change from Eigen to QP real_t
 	qpOASES::real_t* Convert2RealT(const Eigen::MatrixXd& mat);
 	qpOASES::real_t* Convert2RealT2(const Eigen::MatrixXd& mat);
+	qpOASES::real_t* ConvertEigenToRealT(const Eigen::MatrixXd& mat);
 
 	//////////////////////////////////////////////getter & setter///////////////////////////////////////////////////	
 	int getNumTarget_input() { return _NumTarget_Input; }

@@ -98,10 +98,11 @@ auto LMPC::assemble_HMatrix(const int& state_num, std::vector<Eigen::MatrixXd>& 
 auto LMPC::assemble_gMatrix(const int& state_num, const std::vector<Eigen::MatrixXd> &Pss, std::vector<Eigen::MatrixXd>& Pus,
 	Eigen::VectorXd& state_vec, const Eigen::VectorXd& Weight_vec, const std::vector<Eigen::VectorXd*> &refs) -> Eigen::VectorXd
 {
+	//cout << "g_1" << endl;
 	Eigen::VectorXd g(_Dim_Preview);
 	g.setZero();
 	int count = 0;
-	
+	//cout << "g_2" << endl;
 	//if (count == 0)
 	//{
 	//	for (int i = 0; i < 1; i++)
@@ -126,12 +127,15 @@ auto LMPC::assemble_gMatrix(const int& state_num, const std::vector<Eigen::Matri
 	//	}
 	//	count = 1;
 	//}
-
+	//vel
+	//cout << "refnum : " << refs[1]->rows() << " " << "*ref[1]\n" << *refs[1] << endl;
+	
 	for(int i = 0 ; i < state_num ; i++)
 	{
-			g += Weight_vec[i] * ((Pss[i] * state_vec - *refs[i]).transpose()) * Pus[i];
+			g += Weight_vec[i] * (((Pss[i] * state_vec - *refs[i]).transpose()) * Pus[i]);
 	}
-	return std::move(g.transpose());
+	//cout << "g_3" << endl;
+	return std::move(g);
 }
 
 
@@ -168,7 +172,7 @@ auto LMPC::Bound_AMatrix(const int& upper, const int& lower) ->std::tuple<Eigen:
 	return std::tuple(A_upbound, A_lwbound);
 }
 
-void LMPC::Get_Reference(const unsigned& cur_time_stp, const vector<double>& from, Eigen::VectorXd& dest)
+void LMPC::Get_Reference(const unsigned int& cur_time_stp, const vector<double>& from, Eigen::VectorXd& dest)
 {
 	//if (cur_time_stp + _Dim_Preview < _Dim_Total) { //N_p + k ¹øÂ°ÀÇ step
 	//	memcpy(&dest[0], &from[cur_time_stp + 1], sizeof(double) * (_Dim_Preview));
@@ -203,4 +207,21 @@ qpOASES::real_t* LMPC::Convert2RealT2(const Eigen::MatrixXd& mat)
 	}
 
 	return qp;
+}
+
+qpOASES::real_t* LMPC::ConvertEigenToRealT(const Eigen::MatrixXd& mat)
+{
+	// Allocate memory for the new array
+	qpOASES::real_t* realTArray = new qpOASES::real_t[mat.rows() * mat.cols()];
+
+	// Copy data from the Eigen matrix to the real_t array in row-major order
+	for (int i = 0; i < mat.rows(); ++i) {
+		for (int j = 0; j < mat.cols(); ++j) {
+			// Copy elements in row-major order: mat(i, j) -> realTArray[i * mat.cols() + j]
+			assert(i * mat.cols() + j < mat.rows() * mat.cols());
+			realTArray[i * mat.cols() + j] = static_cast<qpOASES::real_t>(mat(i, j));
+		}
+	}
+	// Return the pointer to the new array
+	return realTArray;
 }

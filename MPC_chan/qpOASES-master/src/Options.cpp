@@ -90,7 +90,7 @@ Options& Options::operator=( const Options& rhs )
  */
 returnValue Options::setToDefault( )
 {
-	printLevel = PL_NONE;
+	printLevel = PL_LOW;
 	#ifdef __DEBUG__
 	printLevel = PL_HIGH;
 	#endif
