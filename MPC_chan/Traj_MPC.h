@@ -24,7 +24,6 @@ public:
 
 	int TrjType;
 	int	KinCtrlType;
-
 	
 	double	   x_r{ 0.0 },	   y_r{ 0.0 },    phi_r{ 0.0 },    alpha_r{ 0.0 },  v_r{ 0.0 };
 	double	xdot_r{ 0.0 },  ydot_r{ 0.0 }, phidot_r{ 0.0 }, alphadot_r{ 0.0 };

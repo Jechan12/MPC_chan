@@ -1,7 +1,7 @@
 #include "LMPC.h"
 #include <qpOASES.hpp>
 
-using namespace std;
+
 using namespace Eigen;
 
 //get return like this
@@ -78,13 +78,15 @@ auto LMPC::assemble_HMatrix(const int& state_num, std::vector<Eigen::MatrixXd>& 
 	Eigen::MatrixXd H(_Dim_Preview, _Dim_Preview); 
 	Eigen::MatrixXd E_MAT = Eigen::MatrixXd::Identity(_Dim_Preview, _Dim_Preview);
 	H.setZero();
-
+	
 	for (int i = 0; i < state_num + 1; i++)
 	{
 		//input weight
 		if (i == state_num)
 		{
+			
 			H += Weight_vec.coeff(Weight_vec.size() - 1) * E_MAT;
+			//cout << "Weight_vec.coeff(Weight_vec.size() - 1) : " << Weight_vec.coeff(Weight_vec.size() - 1) << endl;
 			break;
 		}
 		
@@ -102,40 +104,16 @@ auto LMPC::assemble_gMatrix(const int& state_num, const std::vector<Eigen::Matri
 	Eigen::VectorXd g(_Dim_Preview);
 	g.setZero();
 	int count = 0;
-	//cout << "g_2" << endl;
-	//if (count == 0)
-	//{
-	//	for (int i = 0; i < 1; i++)
-	//	{
-	//		cout << "!!" << endl;
-	//		//문제없음
-	//		//cout << Weight_vec[i] << endl; 
-	//		//cout << Weight_vec.size() << endl;
-	//		cout << "Pss.size() : " << Pss.size() << endl;
-	//		cout <<"Pss[i].size() : " << Pss[i].size() << endl;
-	//		/*cout << Pss[0] << endl;*/
-	//		cout << "Pus : " << Pus.size() << endl;
-	//		cout << "Pus[0] : " << Pus[0].size() << endl;
-	//		
-	//		cout << " refs[i]->size() :  " << refs[i]->size() << endl;
-	//		cout << " refs[i] :  " << refs[i] << endl;
-	//		//cout << " *refs[i] :  " << *refs[i] << endl;
-	//		//cout << "A : " << A.size() << endl;
-	//		//cout << "A[0] : " << A[0].size() << endl;
-	//		//cout << A[0] << endl;
-	//		//cout << Pss[state_num] << endl << endl;
-	//	}
-	//	count = 1;
-	//}
-	//vel
-	//cout << "refnum : " << refs[1]->rows() << " " << "*ref[1]\n" << *refs[1] << endl;
-	
+		
 	for(int i = 0 ; i < state_num ; i++)
 	{
-			g += Weight_vec[i] * (((Pss[i] * state_vec - *refs[i]).transpose()) * Pus[i]);
+		g += Weight_vec(i) * (((Pss[i] * state_vec - *refs[i]).transpose()) * Pus[i]);
+		//g += (Weight_vec(i) * Pus[i].transpose()) *(Pss[i] * state_vec - *refs[i]);
 	}
-	//cout << "g_3" << endl;
-	return std::move(g);
+	//for (auto& e : *refs[0])
+	//	cout << e << " ";
+	//cout <<endl <<endl;
+		return g;
 }
 
 
@@ -169,7 +147,7 @@ auto LMPC::Bound_AMatrix(const int& upper, const int& lower) ->std::tuple<Eigen:
 	A_upbound.setConstant(upper);
 	A_lwbound.setConstant(lower);
 
-	return std::tuple(A_upbound, A_lwbound);
+	return std::make_tuple(A_upbound, A_lwbound);
 }
 
 void LMPC::Get_Reference(const unsigned int& cur_time_stp, const vector<double>& from, Eigen::VectorXd& dest)
@@ -211,17 +189,17 @@ qpOASES::real_t* LMPC::Convert2RealT2(const Eigen::MatrixXd& mat)
 
 qpOASES::real_t* LMPC::ConvertEigenToRealT(const Eigen::MatrixXd& mat)
 {
+	if (mat.size() == 0) return nullptr;
+
 	// Allocate memory for the new array
-	qpOASES::real_t* realTArray = new qpOASES::real_t[mat.rows() * mat.cols()];
+	auto realTArray = std::make_unique<qpOASES::real_t[]>(mat.size());
 
 	// Copy data from the Eigen matrix to the real_t array in row-major order
 	for (int i = 0; i < mat.rows(); ++i) {
 		for (int j = 0; j < mat.cols(); ++j) {
-			// Copy elements in row-major order: mat(i, j) -> realTArray[i * mat.cols() + j]
-			assert(i * mat.cols() + j < mat.rows() * mat.cols());
 			realTArray[i * mat.cols() + j] = static_cast<qpOASES::real_t>(mat(i, j));
 		}
 	}
 	// Return the pointer to the new array
-	return realTArray;
+	return realTArray.release();
 }

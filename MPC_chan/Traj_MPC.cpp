@@ -39,13 +39,13 @@ void Traj_MPC::TrajectoryPlanning(const int& trajtype , const int& total_step_si
     {
         //유지보수를 위해 헤더로 보내는게 좋을 듯
         //v_r = 3.0 * tanh(0.5 * local_t);
-        phidot_r = 0.0;
+        phidot_r = 0.1;
         phi_r = 0.0;
         while (local_index < total_step_size)
         {
-            local_t = local_index * steptime * 100.0;
+            local_t = local_index * steptime;
             
-            v_r = 0.1;// *tanh(local_index);
+            v_r = 1.0;
             //std::cout << steptime << std::endl;
             //이거 안밀리고 맞나?
             xdot_r = v_r * cos(phi_r);
@@ -54,7 +54,7 @@ void Traj_MPC::TrajectoryPlanning(const int& trajtype , const int& total_step_si
             //kinematic controller에서 활용?
             x_r += xdot_r * steptime;
             y_r += ydot_r * steptime;
-            //phi_r += phidot_r * steptime;
+            phi_r += phidot_r * steptime;
 
             //position
             traj.x_d[local_index] += traj.x_d[local_index] + x_r;
