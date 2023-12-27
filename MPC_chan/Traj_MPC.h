@@ -16,18 +16,31 @@ struct Traj
 
 class Traj_MPC
 {
+	////////////// Desired velocities of each trajectories///////////
+	// DIRECT
+	double v_r_Direct = 6.0;    double phidot_r_Direct = 0.1;    double phi_r_Direct = 0.0;
+	// CIRCLE
+	double magR = 5.0;  int NoCycle = 1;
+	// SLARUM
+
+	// RAMP_velovity
+	double rampUPDuration = 2.0;		double rampDOWNDuration = v_r_Direct;  // [s]
+
 public:
 	Traj traj;
 
-
-	double TIME_TASK_EXECUTION = 0.0;
+	double TIME_TASK_EXECUTION{0.0};
 
 	int TrjType;
 	int	KinCtrlType;
 	
-	double	   x_r{ 0.0 },	   y_r{ 0.0 },    phi_r{ 0.0 },    alpha_r{ 0.0 },  v_r{ 0.0 };
-	double	xdot_r{ 0.0 },  ydot_r{ 0.0 }, phidot_r{ 0.0 }, alphadot_r{ 0.0 };
+
+	double	   x_r{ 0.0 }, y_r{ 0.0 }, alpha_r{ 0.0 };
+	double	xdot_r{ 0.0 },  ydot_r{ 0.0 },  alphadot_r{ 0.0 };
 	double xddot_r{ 0.0 }, yddot_r{ 0.0 };
+	//phi_r{ 0.0 },phidot_r{ 0.0 },
+	
+
 
 	//Total 작동 시간만큼의 step 동적할당
 	void setsize_Traj(const int size);

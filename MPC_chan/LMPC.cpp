@@ -6,6 +6,8 @@ using namespace Eigen;
 
 //get return like this
 //auto [Ad, Bd] = discretizeState(i, Ac, Bc);
+//Ref : Bilinear transformation of continusous time state space system
+//https://dsp.stackexchange.com/questions/45042/bilinear-transformation-of-continuous-time-state-space-system
 auto LMPC::discretizeState(const int& state_num, const MatrixXd& Ac, const  MatrixXd& Bc)->std::tuple<MatrixXd, MatrixXd>
 {
 	int Acrow = Ac.rows();	int Accol = Ac.cols();
@@ -79,41 +81,34 @@ auto LMPC::assemble_HMatrix(const int& state_num, std::vector<Eigen::MatrixXd>& 
 	Eigen::MatrixXd E_MAT = Eigen::MatrixXd::Identity(_Dim_Preview, _Dim_Preview);
 	H.setZero();
 	
-	for (int i = 0; i < state_num + 1; i++)
+	for (int i = 0; i < (state_num + 1) ; i++)
 	{
 		//input weight
 		if (i == state_num)
 		{
-			
-			H += Weight_vec.coeff(Weight_vec.size() - 1) * E_MAT;
-			//cout << "Weight_vec.coeff(Weight_vec.size() - 1) : " << Weight_vec.coeff(Weight_vec.size() - 1) << endl;
+			H += Weight_vec[i] * E_MAT;
 			break;
 		}
 		
-		H  += Weight_vec[i] * (Pus[i].transpose())* Pus[i];
+		H  += Weight_vec[i] * (Pus[i].transpose() * Pus[i]);
 
 	}
 	return std::move(H);
 }
 
-//ref는 따로 뽑는데 왜 안 합침?
+
 auto LMPC::assemble_gMatrix(const int& state_num, const std::vector<Eigen::MatrixXd> &Pss, std::vector<Eigen::MatrixXd>& Pus,
 	Eigen::VectorXd& state_vec, const Eigen::VectorXd& Weight_vec, const std::vector<Eigen::VectorXd*> &refs) -> Eigen::VectorXd
 {
-	//cout << "g_1" << endl;
 	Eigen::VectorXd g(_Dim_Preview);
 	g.setZero();
-	int count = 0;
+	int count{ 0 };
 		
 	for(int i = 0 ; i < state_num ; i++)
 	{
 		g += Weight_vec(i) * (((Pss[i] * state_vec - *refs[i]).transpose()) * Pus[i]);
-		//g += (Weight_vec(i) * Pus[i].transpose()) *(Pss[i] * state_vec - *refs[i]);
 	}
-	//for (auto& e : *refs[0])
-	//	cout << e << " ";
-	//cout <<endl <<endl;
-		return g;
+	return g;
 }
 
 
@@ -127,7 +122,6 @@ auto LMPC::constraint_AMatrix() ->Eigen::MatrixXd
 
 	//수정 :lower과 upper를 따로 : (2 * Dim 할 이유 없음)
 	Eigen::MatrixXd C_input = Eigen::MatrixXd::Identity(_Dim_Preview, _Dim_Preview);
-
 
 	return C_input;
 }
@@ -152,36 +146,24 @@ auto LMPC::Bound_AMatrix(const int& upper, const int& lower) ->std::tuple<Eigen:
 
 void LMPC::Get_Reference(const unsigned int& cur_time_stp, const vector<double>& from, Eigen::VectorXd& dest)
 {
-	//if (cur_time_stp + _Dim_Preview < _Dim_Total) { //N_p + k 번째의 step
-	//	memcpy(&dest[0], &from[cur_time_stp + 1], sizeof(double) * (_Dim_Preview));
-	//}
-
+	// Assuming dest has been resized to _Dim_Preview before this function call.
 	if (cur_time_stp + _Dim_Preview < _Dim_Total) {
-		// Assuming dest has been resized to _Dim_Preview before this function call.
-		std::copy(from.begin() + cur_time_stp + 1,
-			from.begin() + cur_time_stp + 1 + _Dim_Preview,
-			dest.data());
+		
+		std::copy(from.begin() + cur_time_stp + 1, from.begin() + cur_time_stp + 1 + _Dim_Preview, dest.data());
 	}
-
 }
 
 //col major Eigen to row major real_t of qpOASES
+//Eigen: colmajor , qpOASES : rowmajor
 qpOASES::real_t* LMPC::Convert2RealT(const Eigen::MatrixXd& mat)
 {
-	// Create a row-major map of the matrix
-	Eigen::Map<const LMPC::RowMajorMatrixXd> rowMajorMap(mat.data(), mat.rows(), mat.cols());
-
-	// Return the internal data pointer of the map
-	return const_cast<qpOASES::real_t*>(rowMajorMap.data());
-}
-
-qpOASES::real_t* LMPC::Convert2RealT2(const Eigen::MatrixXd& mat)
-{
 	qpOASES::real_t* qp = new qpOASES::real_t[_Dim_Preview * _Dim_Preview];
+	
+	auto matT = mat.transpose();
 
-	for (int i = 0; i < _Dim_Preview; ++i)
+	for (int i = 0; i < mat.cols() * mat.rows(); ++i)
 	{
-		qp[i] = mat(i);
+		qp[i] = matT(i);
 	}
 
 	return qp;

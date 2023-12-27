@@ -1,15 +1,16 @@
 #pragma once
 #include "MPC_TWIP.h"
 
+
 //continuous ver.
 void MPC_TWIP::setStateMatrix()
 {
-	std::cout << "set state matrix" << endl;
+	std::cout << "Set State Matrix" << endl;
 	
 	double p1 = m_w + J_wa / SQR<const double>(r_W);
-	double mu2 = I_Py + m_p * l_G * (l_G + r_W);
-	double lambda2 = g_const * m_p * l_G / mu2;
-	double gamma2 = -(m_p * l_G + r_W * (m_p + 2 * p1)) / mu2;
+	double mu2 = I_Py + m_p * l_G * (l_G + r_W);  //28.124
+	double lambda2 = g_const * m_p * l_G / mu2;   //9.627222301
+	double gamma2 = -(m_p * l_G + r_W * (m_p + 2 * p1)) / mu2; 
 
 	////////////////  Pitch  ///////////////////	
 	Ac_pitch(0, 2) = 1;
@@ -30,9 +31,6 @@ void MPC_TWIP::setStateMatrix()
 
 	Bc_roll[0] = 0.0;	  Bc_roll[1] = 1.0;
 
-	//cout << Ac_pitch << endl << endl;
-	//cout << Bc_pitch << endl << endl;
-	//cout << Ac_yaw   << endl << endl;
 }
 
 void MPC_TWIP::Weight2vec()
@@ -59,19 +57,8 @@ void MPC_TWIP::initializeRefVec(int& size)
 	Preview_BETA_ref.setZero(); Preview_BETADOT_ref.setZero();
 }
 
-//전체 traj에서 horizon 만큼 잘라서 보낸다.
-void MPC_TWIP::solveRef()
-{
-	Get_Reference(MPC_TWIP::global_indx, Traj_MPC::traj.phi, MPC_TWIP::Preview_PHI_ref);
-	Get_Reference(MPC_TWIP::global_indx, Traj_MPC::traj.phidot, MPC_TWIP::Preview_PHIDOT_ref);
 
-	Get_Reference(MPC_TWIP::global_indx, Traj_MPC::traj.alpha, MPC_TWIP::Preview_ALPHA_ref);
-	Get_Reference(MPC_TWIP::global_indx, Traj_MPC::traj.velocity, MPC_TWIP::Preview_VELOCITY_ref);
-	Get_Reference(MPC_TWIP::global_indx, Traj_MPC::traj.alphadot, MPC_TWIP::Preview_ALPHADOT_ref);
 
-	Get_Reference(MPC_TWIP::global_indx, Traj_MPC::traj.beta, MPC_TWIP::Preview_BETA_ref);
-	Get_Reference(MPC_TWIP::global_indx, Traj_MPC::traj.betadot, MPC_TWIP::Preview_BETADOT_ref);
-}
 
 //루프 돌기 전 세팅
 void MPC_TWIP::OutLoopSetYaw()
@@ -90,56 +77,61 @@ void MPC_TWIP::OutLoopSetYaw()
 	//constraint A bound for QP
 	std::tie(Aub_yaw, Alb_yaw) = Bound_AMatrix(upperbound, lowerbound);
 
-	H_yaw_qp   = ConvertEigenToRealT(H_yaw);
-	cA_yaw_qp  = ConvertEigenToRealT(cA_yaw);
-	Aub_yaw_qp = ConvertEigenToRealT(Aub_yaw);
-	Alb_yaw_qp = ConvertEigenToRealT(Alb_yaw);
+	//convert Eigen to qpOASES
+	H_yaw_qp   = Convert2RealT(H_yaw);
+	cA_yaw_qp  = Convert2RealT(cA_yaw);
+	Aub_yaw_qp = Convert2RealT(Aub_yaw);
+	Alb_yaw_qp = Convert2RealT(Alb_yaw);
 }
 
 
 void MPC_TWIP::OutLoopSetPitch()
 {
+	//discretize
 	auto [Ad_pitch, Bd_pitch] = discretizeState(DOF_P, Ac_pitch, Bc_pitch);
-	
-	cout << Ad_pitch << endl << endl;
-	cout << Bd_pitch << endl << endl;
-	
+	//stacking prediction matrix 
 	std::tie(Pss_pitch, Pus_pitch) = stackingMatrix(DOF_P, Ad_pitch, Bd_pitch);
-
+	
+	//get H matirx for QP
 	H_pitch = assemble_HMatrix(DOF_P, Pus_pitch, W_PITCH);
-	cout << "H_pitch" << endl;
-	cout << H_pitch << endl << endl;;
+	//constraint A matrix for QP
 	cA_pitch = constraint_AMatrix();
-
+	//constraint A bound for QP
 	std::tie(Aub_pitch, Alb_pitch) = Bound_AMatrix(upperbound, lowerbound);
 
-	H_pitch_qp = ConvertEigenToRealT(H_pitch);
-	cA_pitch_qp  = ConvertEigenToRealT(cA_pitch);
-	Aub_pitch_qp = ConvertEigenToRealT(Aub_pitch);
-	Alb_pitch_qp = ConvertEigenToRealT(Alb_pitch);
+	//convert Eigen to qpOASES
+	H_pitch_qp = Convert2RealT(H_pitch);
+	cA_pitch_qp = Convert2RealT(cA_pitch);
+	Aub_pitch_qp = Convert2RealT(Aub_pitch);
+	Alb_pitch_qp = Convert2RealT(Alb_pitch);
 }
 
 void MPC_TWIP::OutLoopSetRoll()
 {
+	//discretize
 	auto [Ad_roll, Bd_roll] = discretizeState(DOF_R, Ac_roll,Bc_roll);
-
+	//stacking prediction matrix 
 	std::tie(Pss_roll, Pus_roll) = stackingMatrix(DOF_R, Ad_roll, Bd_roll);
-	H_roll = assemble_HMatrix(DOF_R, Pus_roll, W_ROLL);
-	cA_roll = constraint_AMatrix();
 
+	//get H matirx for QP
+	H_roll = assemble_HMatrix(DOF_R, Pus_roll, W_ROLL);
+	//constraint A matrix for QP
+	cA_roll = constraint_AMatrix();
+	//constraint A bound for QP
 	std::tie(Aub_roll, Alb_roll) = Bound_AMatrix(upperbound, lowerbound);
 
-	H_roll_qp   = ConvertEigenToRealT(H_roll);
-	cA_roll_qp  = ConvertEigenToRealT(cA_roll);
-	Aub_roll_qp = ConvertEigenToRealT(Aub_roll);
-	Alb_roll_qp = ConvertEigenToRealT(Alb_roll);
+	//convert Eigen to qpOASES
+	H_roll_qp   = Convert2RealT(H_roll);
+	cA_roll_qp  = Convert2RealT(cA_roll);
+	Aub_roll_qp = Convert2RealT(Aub_roll);
+	Alb_roll_qp = Convert2RealT(Alb_roll);
 }
 
 void MPC_TWIP::InLoopSolvYaw()
 {
 	Eigen::VectorXd g_yaw = assemble_gMatrix(DOF_Y, Pss_yaw, Pus_yaw, x_Yaw, W_YAW, { &(Preview_PHI_ref),  &Preview_PHIDOT_ref });
 	g_yaw_qp = ConvertEigenToRealT(g_yaw);
-	
+
 	//.................................................................................//
 	qpOASES::int_t nWSR = 1000;
 	qpOASES::SQProblem yawExample(MPC_TWIP::Dim, 1);
@@ -147,16 +139,16 @@ void MPC_TWIP::InLoopSolvYaw()
 	yawExample.getPrimalSolution(Yaw_Opt);
 	//.................................................................................//
 
+	//select first acc
 	Trgt_a_yaw = Yaw_Opt[0];
-	//cout << Yaw_Opt << endl;
-	//cout << Trgt_a_yaw << endl;
+	
+
 	delete[] g_yaw_qp;
 }
 
 void MPC_TWIP::InLoopSolvPitch()
 {
-	Eigen::VectorXd g_pitch = assemble_gMatrix(MPC_TWIP::DOF_P, Pss_pitch, Pus_pitch, MPC_TWIP::x_Pitch, W_PITCH,
-		{ &(Preview_ALPHA_ref),&(Preview_VELOCITY_ref),&(Preview_ALPHADOT_ref) });
+	Eigen::VectorXd g_pitch = assemble_gMatrix(MPC_TWIP::DOF_P, Pss_pitch, Pus_pitch, MPC_TWIP::x_Pitch, W_PITCH,{ &(Preview_ALPHA_ref),&(Preview_VELOCITY_ref),&(Preview_ALPHADOT_ref) });
 	g_pitch_qp = ConvertEigenToRealT(g_pitch.transpose());
 
 	//.................................................................................//
@@ -166,10 +158,9 @@ void MPC_TWIP::InLoopSolvPitch()
 	pitchExample.getPrimalSolution(Pitch_Opt);
 	//.................................................................................//
 
-	//첫번째 가속도
+	//select first acc
 	Trgt_a_pitch = Pitch_Opt[0]; 
-	//cout << "Trgt_a_pitch : " << Trgt_a_pitch << endl;
-	//cout << Pitch_Opt[0]<< " " << Pitch_Opt[1] << " " << Pitch_Opt[2] <<  endl;
+	
 	delete[] g_pitch_qp;
 }
 
@@ -186,43 +177,4 @@ void MPC_TWIP::InLoopSolvRoll()
 	delete[] g_roll_qp;
 }
 
-void MPC_TWIP::setTIME(double& steptime)
-{
-	cout << "SET TIME" << endl;
-	minInterval = std::chrono::milliseconds(static_cast<int>(steptime * 1000));
-	lastUpdate = std::chrono::steady_clock::now();
-	cout << "minInterval : " << minInterval << endl;
 
-	//Eigen::VectorXd Atest = Eigen::VectorXd::Constant(MPC_TWIP::Dim, 1.0);
-	//qpOASES::real_t* Atestqp = ConvertEigenToRealT(Atest);
-	//cout << Atestqp << endl;
-	//cout << Atestqp[1] << endl;
-	//for (int i = 0; i < MPC_TWIP::Dim; i++)
-	//	cout << Atestqp[i] << " ";
-	//cout << endl;
-
-}
-
-static void MPCLoop(UINT uID, UINT uMsg, DWORD_PTR dwUser, DWORD_PTR dw1, DWORD_PTR dw2) {
-
-	auto Ctrl = reinterpret_cast<MPC_TWIP*>(dwUser);
-		
-	Ctrl->InLoopSolvPitch();
-	
-	Ctrl->InLoopSolvYaw();
-	
-	//Ctrl->InLoopSolvRoll();
-}
-
-//이 함수 실행하면 , mmTimePeriod 마다 MPCLoop함수 실행
-void MPC_TWIP::OpenMPCThread()
-{
-	TIMECAPS time_caps{};
-	timeGetDevCaps(&time_caps, sizeof(TIMECAPS));
-
-	//m_TimerID = timeSetEvent(time interval, minimum time resoultion , pointer to the callback function , reinterpret_cast<DWORD_PTR>(&robot), ...);
-	m_TimerID = timeSetEvent(mmTimePeriod, time_caps.wPeriodMin, MPCLoop, reinterpret_cast<DWORD_PTR>(this), TIME_PERIODIC);
-	if (m_TimerID == NULL) {
-		throw invalid_argument("Failed to create multimedia timer.");
-	}
-}

@@ -26,28 +26,40 @@ void Traj_MPC::TrajectoryPlanning(const int& trajtype , const int& total_step_si
     double local_t = 0.0;
     int local_index = 0;
 
-    /*switch (TrjType) {*/
     if (TrjType == STAY)
     {
         while (local_index < total_step_size)
         {
-            //already all desired trajctory is ZERO
+            // all desired trajctories are already ZERO
             break;
         }
     }
     else if (TrjType == DIRECT) //Given v_r & phidot_r
     {
-        //유지보수를 위해 헤더로 보내는게 좋을 듯
-        //v_r = 3.0 * tanh(0.5 * local_t);
-        phidot_r = 0.1;
-        phi_r = 0.0;
+        
+        
+        double phidot_r = phidot_r_Direct;
+        double phi_r = phi_r_Direct;
+        double v_r = v_r_Direct;
+
         while (local_index < total_step_size)
         {
             local_t = local_index * steptime;
             
-            v_r = 1.0;
-            //std::cout << steptime << std::endl;
-            //이거 안밀리고 맞나?
+            if (local_t < rampUPDuration)
+            { //Ramp-up phase
+                v_r = (local_t / rampUPDuration) * v_r_Direct;
+            }
+            else if (local_t > (TIME_TASK_EXECUTION - rampDOWNDuration ))
+            { //Ramp-down phase
+                v_r = ((TIME_TASK_EXECUTION - local_t) / rampDOWNDuration) * v_r_Direct;
+                phidot_r = ((TIME_TASK_EXECUTION - local_t) / rampDOWNDuration) * phidot_r_Direct;
+            }
+            else
+            { //constant velocity
+                v_r = v_r_Direct;
+            }
+
             xdot_r = v_r * cos(phi_r);
             ydot_r = v_r * sin(phi_r);
 
@@ -56,9 +68,9 @@ void Traj_MPC::TrajectoryPlanning(const int& trajtype , const int& total_step_si
             y_r += ydot_r * steptime;
             phi_r += phidot_r * steptime;
 
-            //position
-            traj.x_d[local_index] += traj.x_d[local_index] + x_r;
-            traj.y_d[local_index] += traj.y_d[local_index] + y_r;
+            //position (수정예정)
+            traj.x_d[local_index] = traj.x_d[local_index] + x_r;
+            traj.y_d[local_index] = traj.y_d[local_index] + y_r;
 
             //Yaw
             traj.phi[local_index] = phi_r;
@@ -79,10 +91,9 @@ void Traj_MPC::TrajectoryPlanning(const int& trajtype , const int& total_step_si
     else if (TrjType == CIRCLE) //	Given linear velocity ref. v_r ( Thus phidot_r = v_r / radius )
     {
         //유지보수를 위해 헤더로 보내는게 좋을 듯
-        double magR = 5.0;
-        int NoCycle = 1;
-        v_r = 2 * M_PI * NoCycle * magR / TIME_TASK_EXECUTION;
-        phidot_r = v_r / magR;
+
+        double v_r = 2 * M_PI * NoCycle * magR / TIME_TASK_EXECUTION;
+        double phidot_r = v_r / magR;
 
         while (local_index < total_step_size)
         {
